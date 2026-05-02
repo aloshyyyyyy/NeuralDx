@@ -2,13 +2,19 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST, require_http_methods
 from .models import user_table, Prediction
+from PIL import Image, UnidentifiedImageError
+import uuid
+import logging
+logger = logging.getLogger(__name__)
 
 
 def login_user(request):
     return render(request, 'login.html')
 
 
+@require_POST
 def login_post(request):
     username = request.POST.get('username')
     password = request.POST.get('password')
@@ -25,6 +31,7 @@ def register_user(request):
     return render(request, 'register.html')
 
 
+@require_POST
 def register_post(request):
     name = request.POST.get('name')
     username = request.POST.get('username')
@@ -63,8 +70,9 @@ def register_post(request):
 
         login(request, user)
         return redirect('/home/')
-    except Exception as e:
-        return render(request, 'register.html', {'error_message': f'Error creating account: {str(e)}'})
+    except Exception:
+        logger.exception('An error occurred during prediction')
+        return render(request, 'register.html', {'error_message': 'Error creating account. Please try again.'})
 
 import numpy as np
 import os
@@ -92,76 +100,101 @@ def get_model():
         model = keras.models.load_model(
             MODEL_PATH,
             compile=False,
-            safe_mode=False
+            safe_mode=True
         )
     return model
 
+@login_required(login_url='/login/')
 def home(request):
     return render(request, 'home.html')
 
+@login_required(login_url='/login/')
 def upload_get(request):
     return render(request, 'upload.html')
 
+@login_required(login_url='/login/')
+@require_POST
 def upload_and_predict(request):
-    if request.method == 'POST' and request.FILES.get('image'):
-        file = request.FILES['image']
-        file_name = default_storage.save('tmp/' + file.name, file)
-        file_path = default_storage.path(file_name)
+    file = request.FILES.get('image')
+    if not file:
+        return render(request, 'upload.html', {'error': 'No image file provided.'})
 
-        try:
-            IMG_SIZE = 224
+    # Size check — max 5MB
+    if file.size > 5 * 1024 * 1024:
+        return render(request, 'upload.html', {'error': 'File size exceeds 5MB limit.'})
 
-            img = keras.utils.load_img(
-                file_path,
-                target_size=(IMG_SIZE, IMG_SIZE),
-                color_mode='rgb'
-            )
+    # MIME type check
+    allowed_types = {'image/jpeg', 'image/png'}
+    if file.content_type not in allowed_types:
+        return render(request, 'upload.html', {'error': 'Only JPEG and PNG files are allowed.'})
 
-            img_array = keras.utils.img_to_array(img)
+    # Real image content verification
+    try:
+        with Image.open(file) as im:
+            im.verify()
+    except (UnidentifiedImageError, Exception):
+        return render(request, 'upload.html', {'error': 'Uploaded file is not a valid image.'})
+    file.seek(0)
 
-            from tensorflow.keras.applications.vgg16 import preprocess_input
-            img_array = preprocess_input(img_array)
+    # Safe filename using UUID
+    safe_name = f"{uuid.uuid4().hex}{os.path.splitext(file.name)[1].lower()}"
+    file_name = default_storage.save('tmp/' + safe_name, file)
+    file_path = default_storage.path(file_name)
 
-            img_array = np.expand_dims(img_array, axis=0)
+    try:
+        IMG_SIZE = 224
 
-            model = get_model()
-            predictions = model.predict(img_array)
+        img = keras.utils.load_img(
+            file_path,
+            target_size=(IMG_SIZE, IMG_SIZE),
+            color_mode='rgb'
+        )
 
-            predicted_index = int(np.argmax(predictions))
-            predicted_class = class_names[predicted_index]
-            confidence = round(100 * np.max(predictions), 2)
+        img_array = keras.utils.img_to_array(img)
 
-            # 🔍 DEBUG
-            print("Raw predictions:", predictions)
-            print("Predicted index:", predicted_index)
-            print("Predicted class:", predicted_class)
+        from tensorflow.keras.applications.vgg16 import preprocess_input
+        img_array = preprocess_input(img_array)
 
-            file.seek(0)
-            prediction_record = Prediction.objects.create(
-                user=request.user,
-                image=file,
-                result=predicted_class,
-                confidence=confidence
-            )
+        img_array = np.expand_dims(img_array, axis=0)
 
-            return render(request, 'result.html', {
-                'result': predicted_class,
-                'confidence': confidence,
-                'image_url': prediction_record.image.url,
-                'prediction_id': prediction_record.id
-            })
+        model = get_model()
+        predictions = model.predict(img_array)
 
-        except Exception as e:
-            return render(request, 'upload.html', {'error': str(e)})
+        predicted_index = int(np.argmax(predictions))
+        predicted_class = class_names[predicted_index]
+        confidence = round(100 * np.max(predictions), 2)
 
-        finally:
-            default_storage.delete(file_name)
+        # 🔍 DEBUG
+        logger.debug("Raw predictions: %s", predictions)
+        logger.debug("Predicted index: %s", predicted_index)
+        logger.debug("Predicted class: %s", predicted_class)
+
+        file.seek(0)
+        prediction_record = Prediction.objects.create(
+            user=request.user,
+            image=file,
+            result=predicted_class,
+            confidence=confidence
+        )
+
+        return render(request, 'result.html', {
+            'result': predicted_class,
+            'confidence': confidence,
+            'image_url': prediction_record.image.url,
+            'prediction_id': prediction_record.id
+        })
+
+    except Exception:
+        logger.exception('An error occurred during prediction')
+        return render(request, 'upload.html', {'error': 'Something went wrong. Please try again.'})
+
+    finally:
+        default_storage.delete(file_name)
 
     return render(request, 'upload.html')
 
+@login_required(login_url='/login/')
 def history(request):
-    if not request.user.is_authenticated:
-        return redirect('/login/')
     predictions = Prediction.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'history.html', {'predictions': predictions})
 
@@ -187,9 +220,8 @@ from django.http import HttpResponse
 import os
 from datetime import datetime
 
+@login_required(login_url='/login/')
 def download_report(request, prediction_id):
-    if not request.user.is_authenticated:
-        return redirect('login')
     
     # Fetch the prediction record
     from .models import Prediction
@@ -289,3 +321,10 @@ def download_report(request, prediction_id):
     p.showPage()
     p.save()
     return response
+
+from django.contrib.auth import logout as auth_logout
+
+@require_http_methods(["GET", "POST"])
+def logout_user(request):
+    auth_logout(request)
+    return redirect('/login/')

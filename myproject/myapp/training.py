@@ -15,8 +15,10 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.utils.class_weight import compute_class_weight
 
 # Paths
-train_path = "/Users/Aloshy/Downloads/Covid19-dataset/train"   # ← UPDATE THIS PATH TO YOUR ACTUAL DATASET LOCATION
-test_path = "/Users/Aloshy/Downloads/Covid19-dataset/test"     # ← UPDATE THIS PATH TO YOUR ACTUAL DATASET LOCATION
+# UPDATE THESE PATHS to point to your local Covid19-dataset folder
+# Example: "/Users/yourname/Downloads/Covid19-dataset/train"
+train_path = "REPLACE_WITH_YOUR_TRAIN_PATH"
+test_path = "REPLACE_WITH_YOUR_TEST_PATH"
 
 # Preprocessing
 from tensorflow.keras.applications.vgg16 import preprocess_input

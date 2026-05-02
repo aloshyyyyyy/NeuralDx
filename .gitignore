@@ -32,9 +32,10 @@ Covid19-dataset/
 .AppleDouble
 .LSOverride
 
-# VS Code / Windsurf
+# IDE
 .vscode/
 .windsurf/
+.idea/
 
 # Environment variables
 .env
@@ -52,3 +53,5 @@ logs/
 dist/
 build/
 *.egg-info/
+db.sqlite3
+media/
