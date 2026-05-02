@@ -37,3 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     }
 });
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Update active button
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const filter = btn.dataset.filter;
+    document.querySelectorAll('.history-card').forEach(card => {
+      if (filter === 'all' || card.dataset.result === filter) {
+        card.style.display = 'flex';
+        card.style.animation = 'none'; // reset animation
+        card.offsetHeight; // trigger reflow
+        card.style.animation = 'fadeIn 0.3s ease forwards';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});

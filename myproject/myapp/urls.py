@@ -13,4 +13,5 @@ urlpatterns = [
     path('upload_and_predict/', views.upload_and_predict, name='upload_and_predict'),
     path('history/', views.history, name='history'),
     path('profile/', views.profile, name='profile'),
+    path('report/download/<int:prediction_id>/', views.download_report, name='download_report'),
 ]

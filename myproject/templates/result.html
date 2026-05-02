@@ -61,7 +61,11 @@
 
                 <div class="divider"></div>
 
-                <a href="/upload_get/" class="btn-ghost w-full justify-center">
+                <a href="{% url 'download_report' prediction_id %}" class="btn-download">
+                    &darr; Download Report
+                </a>
+
+                <a href="/upload_get/" class="btn-ghost w-full justify-center mt-3">
                     &larr; New Analysis
                 </a>
             </div>

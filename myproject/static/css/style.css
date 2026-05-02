@@ -525,3 +525,56 @@ a.link-blue:hover { color: var(--accent-hover); }
     padding: 12px;
     border-radius: 8px;
 }
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  border-color: #0A36FF;
+  color: #0A36FF;
+}
+
+.filter-btn.active {
+  background: #0A36FF;
+  border-color: #0A36FF;
+  color: white;
+}
+
+.filter-btn.covid.active { background: #ef4444; border-color: #ef4444; }
+.filter-btn.normal.active { background: #10b981; border-color: #10b981; }
+.filter-btn.pneumonia.active { background: #f97316; border-color: #f97316; }
+
+/* Download Button */
+.btn-download {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+  background: #0A36FF;
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 12px;
+  transition: background 0.25s ease;
+}
+.btn-download:hover {
+  background: #0026cc;
+}

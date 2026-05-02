@@ -147,7 +147,8 @@ def upload_and_predict(request):
             return render(request, 'result.html', {
                 'result': predicted_class,
                 'confidence': confidence,
-                'image_url': prediction_record.image.url
+                'image_url': prediction_record.image.url,
+                'prediction_id': prediction_record.id
             })
 
         except Exception as e:
@@ -177,3 +178,114 @@ def profile(request):
         'last_prediction_date': last_prediction.created_at if last_prediction else None
     }
     return render(request, 'profile.html', context)
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
+import os
+from datetime import datetime
+
+def download_report(request, prediction_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Fetch the prediction record
+    from .models import Prediction
+    prediction = Prediction.objects.get(id=prediction_id, user=request.user)
+    
+    # Create PDF response
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="NeuralDx_Report_{prediction.id}.pdf"'
+    
+    # Draw PDF
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+    
+    # Colors
+    if prediction.result == "Covid":
+        accent = colors.HexColor('#ef4444')
+    elif prediction.result == "Normal":
+        accent = colors.HexColor('#10b981')
+    else:
+        accent = colors.HexColor('#f97316')
+    
+    # Header bar
+    p.setFillColor(colors.HexColor('#0f172a'))
+    p.rect(0, height - 60*mm, width, 60*mm, fill=1, stroke=0)
+    
+    # App name
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 24)
+    p.drawString(20*mm, height - 25*mm, "NeuralDx")
+    p.setFont("Helvetica", 11)
+    p.setFillColor(colors.HexColor('#94a3b8'))
+    p.drawString(20*mm, height - 35*mm, "AI-Powered Medical Diagnostic Report")
+    
+    # Report date top right
+    p.setFont("Helvetica", 9)
+    date_str = prediction.created_at.strftime("%B %d, %Y  %I:%M %p")
+    p.drawRightString(width - 20*mm, height - 25*mm, date_str)
+    
+    # Accent bar
+    p.setFillColor(accent)
+    p.rect(0, height - 63*mm, width, 3*mm, fill=1, stroke=0)
+    
+    # Scan image
+    if prediction.image:
+        img_path = prediction.image.path
+        if os.path.exists(img_path):
+            img_y = height - 145*mm
+            p.drawImage(img_path, 20*mm, img_y, width=80*mm, height=70*mm, preserveAspectRatio=True)
+    
+    # Result section
+    p.setFillColor(colors.HexColor('#0f172a'))
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(115*mm, height - 80*mm, "DIAGNOSTIC RESULT")
+    
+    p.setFillColor(accent)
+    p.setFont("Helvetica-Bold", 28)
+    p.drawString(115*mm, height - 95*mm, prediction.result)
+    
+    p.setFillColor(colors.HexColor('#475569'))
+    p.setFont("Helvetica", 11)
+    p.drawString(115*mm, height - 108*mm, f"AI Confidence: {prediction.confidence:.2f}%")
+    
+    # Confidence bar
+    bar_x = 115*mm
+    bar_y = height - 118*mm
+    bar_w = 75*mm
+    bar_h = 4*mm
+    p.setFillColor(colors.HexColor('#e2e8f0'))
+    p.roundRect(bar_x, bar_y, bar_w, bar_h, 2*mm, fill=1, stroke=0)
+    fill_w = bar_w * (prediction.confidence / 100)
+    p.setFillColor(accent)
+    p.roundRect(bar_x, bar_y, fill_w, bar_h, 2*mm, fill=1, stroke=0)
+    
+    # Patient info section
+    p.setFillColor(colors.HexColor('#f8faff'))
+    p.rect(20*mm, height - 185*mm, width - 40*mm, 30*mm, fill=1, stroke=0)
+    p.setFillColor(colors.HexColor('#94a3b8'))
+    p.setFont("Helvetica", 9)
+    p.drawString(25*mm, height - 163*mm, "PATIENT")
+    p.drawString(100*mm, height - 163*mm, "ANALYSIS DATE")
+    p.drawString(175*mm, height - 163*mm, "REPORT ID")
+    p.setFillColor(colors.HexColor('#0f172a'))
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(25*mm, height - 172*mm, request.user.username)
+    p.drawString(100*mm, height - 172*mm, prediction.created_at.strftime("%d %b %Y"))
+    p.drawString(175*mm, height - 172*mm, f"#{prediction.id:04d}")
+    
+    # Disclaimer
+    p.setFillColor(colors.HexColor('#94a3b8'))
+    p.setFont("Helvetica-Oblique", 8)
+    p.drawCentredString(width/2, 20*mm, "This is an AI-generated result for educational purposes only. Please consult a qualified medical professional.")
+    
+    # Footer line
+    p.setStrokeColor(colors.HexColor('#e2e8f0'))
+    p.line(20*mm, 28*mm, width - 20*mm, 28*mm)
+    
+    p.showPage()
+    p.save()
+    return response

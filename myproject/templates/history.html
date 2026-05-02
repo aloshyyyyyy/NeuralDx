@@ -36,10 +36,17 @@
             </div>
         </div>
 
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn covid" data-filter="Covid">Covid</button>
+            <button class="filter-btn normal" data-filter="Normal">Normal</button>
+            <button class="filter-btn pneumonia" data-filter="Viral Pneumonia">Viral Pneumonia</button>
+        </div>
+
         {% if predictions %}
             <div class="flex-col">
                 {% for p in predictions %}
-                <div class="card history-card card-hover border-l-{{ p.result|slugify }} fade-in">
+                <div class="card history-card card-hover border-l-{{ p.result|slugify }} fade-in" data-result="{{ p.result }}">
                     {% if p.image %}
                     <img src="{{ p.image.url }}" alt="Scan">
                     {% endif %}
