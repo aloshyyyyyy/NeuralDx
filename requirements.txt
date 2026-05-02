@@ -1,0 +1,7 @@
+Django>=4.2
+tensorflow-macos
+tensorflow-metal
+numpy
+Pillow
+scikit-learn
+matplotlib

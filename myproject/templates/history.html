@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralDx | Diagnostic History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="fade-in">
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/home/" class="logo">
+                <i class="bi bi-cpu"></i> NeuralDx
+            </a>
+            <div class="flex items-center gap-6">
+                <a href="/home/" class="nav-link hidden sm-block text-sm">Dashboard</a>
+                <a href="/upload_get/" class="nav-link hidden sm-block text-sm">New Analysis</a>
+                <a href="/profile/" class="nav-link font-bold" style="color: var(--text-primary); margin-left: 16px;">{{ request.user.username }}</a>
+                <a href="/login/" class="btn-primary" style="padding: 8px 20px;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content" style="max-width: 800px;">
+        <div class="flex items-center gap-4 mb-8">
+            <div class="icon-circle" style="margin-bottom: 0;">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl text-primary">Diagnostic History</h1>
+                <p class="text-muted text-sm">Your past AI analyses</p>
+            </div>
+        </div>
+
+        {% if predictions %}
+            <div class="flex-col">
+                {% for p in predictions %}
+                <div class="card history-card card-hover border-l-{{ p.result|slugify }} fade-in">
+                    {% if p.image %}
+                    <img src="{{ p.image.url }}" alt="Scan">
+                    {% endif %}
+
+                    <div class="flex-col w-full">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="text-lg font-bold color-{{ p.result|slugify }}">{{ p.result }}</h3>
+                            <span class="text-xs text-muted">{{ p.created_at|date:"M d, Y g:i A" }}</span>
+                        </div>
+                        <div class="stat-pill" style="display: inline-block; width: max-content; padding: 4px 12px; font-size: 0.75rem;">
+                            Confidence: {{ p.confidence }}%
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card p-12 text-center flex-col items-center justify-center fade-in">
+                <i class="bi bi-folder2-open text-muted mb-4" style="font-size: 4rem;"></i>
+                <h3 class="text-xl mb-2 text-primary">No analyses yet</h3>
+                <p class="text-muted mb-6">You haven't uploaded any scans for diagnosis.</p>
+                <a href="/upload_get/" class="btn-primary">
+                    Run your first scan
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        // Apply stagger to history cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.history-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.opacity = '0';
+                card.style.animationFillMode = 'forwards';
+            });
+        });
+    </script>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

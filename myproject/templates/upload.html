@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralDx | New Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="fade-in">
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/home/" class="logo">
+                <i class="bi bi-cpu"></i> NeuralDx
+            </a>
+            <div class="flex items-center gap-6">
+                <a href="/profile/" class="nav-link font-bold" style="color: var(--text-primary);">{{ request.user.username }}</a>
+                <a href="/login/" class="btn-primary" style="padding: 8px 20px;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="card card-center-lg">
+            <a href="/home/" class="text-muted mb-6 hover:text-blue" style="display: inline-block; font-size: 0.9rem;">&larr; Dashboard</a>
+            
+            <h1 class="text-2xl mb-2 text-center">New Analysis</h1>
+            <p class="text-muted text-center mb-8">Upload a chest X-ray or lung scan for AI diagnosis</p>
+
+            {% if error %}
+                <div class="alert-error">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form action="/upload_and_predict/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div id="dropZone" class="dropzone mb-4">
+                    <input type="file" id="imageUpload" name="image" accept="image/*" required>
+                    
+                    <div id="uploadIconContainer">
+                        <i class="bi bi-cloud-arrow-up drop-icon"></i>
+                        <h3 class="text-primary mb-1 text-lg font-bold">Drag & drop your scan here</h3>
+                        <p class="text-muted text-sm">or click to browse</p>
+                    </div>
+
+                    <img id="imagePreview" src="#" alt="Preview" class="hidden w-full mt-2" style="max-height: 120px; object-fit: contain; border-radius: 8px;">
+                </div>
+
+                <p class="text-center text-muted text-xs mb-8">Supports JPG, PNG &mdash; Max 5MB</p>
+
+                <button type="submit" id="submitBtn" class="btn-primary w-full" disabled>Run Analysis</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

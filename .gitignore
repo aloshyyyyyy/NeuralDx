@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Django
+*.sqlite3
+media/
+staticfiles/
+
+# ML Models (too large for GitHub)
+*.keras
+*.h5
+*.pkl
+*.pt
+*.pth
+
+# Dataset
+dataset/
+Covid19-dataset/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code / Windsurf
+.vscode/
+.windsurf/
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Logs
+*.log
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Distribution
+dist/
+build/
+*.egg-info/
