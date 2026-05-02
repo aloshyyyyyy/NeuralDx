@@ -5,4 +5,5 @@ numpy
 Pillow
 scikit-learn
 matplotlib
+python-dotenv
 seaborn
