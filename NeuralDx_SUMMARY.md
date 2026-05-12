@@ -39,7 +39,7 @@ Evidence:
 9. **Model loading and prediction**:
    - Model path points to `myapp/model_VGG.keras`.
    - Class index JSON is loaded and reversed to index→class map.
-   - Model is lazy-loaded once through `get_model()` with `safe_mode=True`.
+   - Model is lazy-loaded once through `get_model()` with `safe_mode=True` (restricting unsafe/custom object deserialization during load).
    - Prediction uses `argmax` + max probability for confidence.
    (`/home/runner/work/NeuralDx/NeuralDx/myproject/myapp/views.py:86-105`, `160-166`).
 10. **Persistence and result rendering**:
@@ -81,10 +81,9 @@ Evidence:
 - **python-dotenv** for env loading (`/home/runner/work/NeuralDx/NeuralDx/myproject/myproject/settings.py:20-24`; `/home/runner/work/NeuralDx/NeuralDx/requirements.txt:8`).
 - **ReportLab** for PDF generation (`/home/runner/work/NeuralDx/NeuralDx/myproject/myapp/views.py:215-218`).
 
-### Package manifests present/missing
+### Dependency manifests
 - Python dependencies are managed via `requirements.txt` (`/home/runner/work/NeuralDx/NeuralDx/requirements.txt:1-9`).
-- No `pyproject.toml` present in repository.
-- No `package.json` present in repository (no npm-managed JS dependency manifest).
+- JavaScript dependencies are not npm-managed in this repo; frontend assets are provided through static files and CDN links in templates (`/home/runner/work/NeuralDx/NeuralDx/myproject/templates/login.html:8-10`; `/home/runner/work/NeuralDx/NeuralDx/myproject/static/js/main.js:1-59`).
 
 ## Key features
 
